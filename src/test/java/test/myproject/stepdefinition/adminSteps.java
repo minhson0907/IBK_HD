@@ -10,6 +10,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 import test.myproject.base.TestBase;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import static org.testng.Assert.assertEquals;
@@ -97,8 +98,6 @@ public class adminSteps extends TestBase {
             driver.findElement(By.xpath("//table[@id='tb-acct-limit']//tr[td[contains(text(),'"+ transferType +"')]]/td[4]/input")).clear();
             driver.findElement(By.xpath("//table[@id='tb-acct-limit']//tr[td[contains(text(),'"+ transferType +"')]]/td[4]/input")).sendKeys(amount);
         }
-        driver.findElement(By.xpath("//a[@onclick='return doUpdate();']")).click();
-        Thread.sleep(3000);
     }
 
     @Then("^I approve the above request$")
@@ -112,5 +111,50 @@ public class adminSteps extends TestBase {
         driver.findElement(By.xpath("//input[@type='password']")).clear();
         driver.findElement(By.xpath("//input[@type='password']")).sendKeys("123456");
         driver.findElement(By.xpath("//a[@onclick='return doApprove(document.forms[0]);']")).click();
+    }
+
+    @And("^I transfer from \"([^\"]*)\" to \"([^\"]*)\" account with before remaining limit total$")
+    public void iTransferFromToAccountWithBeforeRemainingLimitTotal(String fromAccount, String toAccount) throws Exception {
+        try{
+            if(driver.findElement(By.name("ftRequest/fundsTransfer/fromAccount/accountNumber")).isEnabled()){
+                Select accountList = new Select(driver.findElement(By.name("ftRequest/fundsTransfer/fromAccount/accountNumber")));
+                accountList.selectByVisibleText(fromAccount);
+            }
+        }
+        catch (Exception e){System.out.println("Error:  " + e.getMessage());}
+        driver.findElement(By.name("ftRequest/fundsTransfer/toAccount/accountNumber")).sendKeys(toAccount);
+        DecimalFormat decimalFormat = new DecimalFormat("##0000");
+        String s_before_limit = decimalFormat.format(before_limit);
+        driver.findElement(By.name("ftRequest/fundsTransfer/transferAmountFormat")).sendKeys(s_before_limit);
+        Select feePayerList = new Select(driver.findElement(By.id("tags_charge")));
+        feePayerList.selectByVisibleText("Bên nhận");
+        driver.findElement(By.name("ftRequest/fundsTransfer/remarks")).sendKeys("AUTO DESCRIPTION");
+        driver.findElement(By.xpath("//a[@onclick='return doSubmit(myform);' and contains(text(),'Tiếp Tục')]")).click();
+    }
+
+    @And("^I edit limit amount (per day|per transaction) over remaining limit for \"([^\"]*)\"$")
+    public void iEditLimitAmountPerDayOverRemainingLimitFor(String limitType, String transferType) throws Exception {
+          if(limitType.equals("per transaction") && transferType.equals("Chuyển tiền trong khác chủ TK")){
+              driver.findElement(By.xpath("//table[@id='tb-acct-limit']//tr[td[contains(text(),'"+ transferType +"')]]/td[2]/input")).clear();
+              double per_transaction_limit = before_limit + 1;
+              DecimalFormat decimalFormat = new DecimalFormat("##0000");
+              String s_per_transaction_limit = decimalFormat.format(per_transaction_limit);
+              driver.findElement(By.xpath("//table[@id='tb-acct-limit']//tr[td[contains(text(),'"+ transferType +"')]]/td[2]/input")).sendKeys(s_per_transaction_limit);
+              Thread.sleep(2000);
+        }
+          else if(limitType.equals("per day") && transferType.equals("Chuyển tiền trong khác chủ TK")){
+              driver.findElement(By.xpath("//table[@id='tb-acct-limit']//tr[td[contains(text(),'"+ transferType +"')]]/td[4]/input")).clear();
+              double per_day_limit = before_limit + 2;
+              DecimalFormat decimalFormat = new DecimalFormat("##0000");
+              String s_per_day_limit = decimalFormat.format(per_day_limit);
+              driver.findElement(By.xpath("//table[@id='tb-acct-limit']//tr[td[contains(text(),'"+ transferType +"')]]/td[4]/input")).sendKeys(s_per_day_limit);
+              Thread.sleep(2000);
+        }
+    }
+
+    @Then("^I update the above request$")
+    public void iUpdateTheAboveRequest() throws Exception{
+        driver.findElement(By.xpath("//a[@onclick='return doUpdate();']")).click();
+        Thread.sleep(3000);
     }
 }

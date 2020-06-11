@@ -2,12 +2,12 @@
   Feature: Bulk Local Transfer
 
     @KHDN_bulk_local_transfer-01
-    Scenario: I do transaction successfully with internal transfer
+    Scenario: I do transaction successfully with
       Given I open IBK page
       When I login KHDN with "autotestnhap" and "abc123"
       And I get amount total before doing transaction
       Then I do transaction with type is "TRANSFER" and "Chuyển khoản theo lô trong HDBank"
-      And I upload "\data\Ck lo trong.xls" file to do transferring by "bulk local" with separated to single transaction is "No"
+      And I upload "\data\CK lo trong\Ck lo trong.xls" file to do transferring by "bulk local" with separated to single transaction is "No"
       And I verify "Tổng số giao dịch" "10" is displayed after doing transaction successfully
       And I verify "Tổng giá trị giao dịch quy đổi theo loại tiền" "27,891 VND" is displayed after doing transaction successfully
       And I verify "Phí giao dịch" "0 VND" is displayed after doing transaction successfully
