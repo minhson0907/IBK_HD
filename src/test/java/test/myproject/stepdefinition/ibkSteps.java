@@ -12,6 +12,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 import test.myproject.base.TestBase;
 
+import java.text.DecimalFormat;
+import java.text.Format;
 import java.time.Instant;
 import java.util.List;
 
@@ -25,6 +27,8 @@ public class ibkSteps extends TestBase {
     private double accountTotal = 0;
     private double d_fee = 0;
     private String s_number = "";
+    private double d_bulkFee = 0;
+    private double d_transaction_total = 0;
 
     @Given("^I open (IBK|Admin) page$")
     public void iOpenHomepage(String type) throws Exception {
@@ -81,9 +85,17 @@ public class ibkSteps extends TestBase {
         amount=amount.replace("VND ","");
         amount=amount.replace(",","");
         amount=amount.replace(" VND","");
-        System.out.println("==================== Amount from " + amount);
+        System.out.println("==================== Debit amount " + amount);
         d_amount = Double.parseDouble(amount);
         return d_amount;
+    }
+
+    private double getTransactionNumber (String name) throws Exception{
+        WebElement elemAmount=driver.findElement(By.xpath("//table[@class='data-table']//td[contains(text(),'" + name + "')]//following-sibling::td"));
+        String amount=elemAmount.getText();
+        System.out.println("==================== Transaction total " + amount);
+        d_transaction_total = Double.parseDouble(amount);
+        return d_transaction_total;
     }
 
     private double getFeefrom (String name) throws Exception{
@@ -103,24 +115,41 @@ public class ibkSteps extends TestBase {
         debitAmount=debitAmount.replace(" VND","");
         debitAmount=debitAmount.replace(",","");
         debitAmount=debitAmount.replace("Dư có: ","");
-//        System.out.println("==============================debitAmount " + debitAmount);
+        System.out.println("==============================Amount total in Home " + debitAmount);
         accountTotal = Double.parseDouble(debitAmount);
         return accountTotal;
     }
 
+    private String getBulkFee () throws Exception{
+        String bulkFee = driver.findElement(By.xpath("//table[@class='tableTemp']//tr[2]/td[3]")).getText();
+        bulkFee = bulkFee.replace("Số tiền chuyển: VND 20,000,000","");
+        bulkFee = bulkFee.replace("Tính phí: Bên chuyển","");
+        bulkFee = bulkFee.replace("Phí: VND ","");
+        bulkFee = bulkFee.replace(",","");
+        System.out.println("==============================bulkFee " + bulkFee );
+        d_bulkFee = Double.parseDouble(bulkFee);
+        return bulkFee;
+    }
+
     @And("^I get amount total before doing transaction$")
     public void iGetAmountTotalBeforeDoingTransaction() throws Exception{
+        waitElement(By.xpath("//table[@class='tableTemp']//td[@class='td-head']/p[contains(text(),'Tài khoản tiền gửi')]//following-sibling::p"));
         before_transfer_account = getAccountTotal("Tài khoản tiền gửi");
-        System.out.println("before transfer account" + before_transfer_account);
+        DecimalFormat decimalFormat = new DecimalFormat("#");
+        String test = decimalFormat.format(before_transfer_account);
+        System.out.println("----------------------before transfer account " + test);
     }
 
     @And("^I get amount total after doing transaction$")
     public void iGetAmountTotalAfterDoingTransaction() throws Exception {
-        Thread.sleep(10000);
+        Thread.sleep(60000);
         // back to Home page
         driver.findElement(By.xpath("//li[@class='dropdown']/a[@class='js-activated']")).click();
         waitElement(By.xpath("//table[@class='tableTemp']//td[@class='td-head']/p[contains(text(),'Tài khoản tiền gửi')]"));
         after_transfer_account = getAccountTotal("Tài khoản tiền gửi");
+        DecimalFormat decimalFormat = new DecimalFormat("#");
+        String test = decimalFormat.format(after_transfer_account);
+        System.out.println("----------------------after transfer account " + test);
     }
 
     @And("^I transfer from \"([^\"]*)\" to \"([^\"]*)\" account, \"([^\"]*)\" amount and \"([^\"]*)\" description with fee payer is \"([^\"]*)\"$")
@@ -150,20 +179,30 @@ public class ibkSteps extends TestBase {
 
     @And("^I verify before total amount = after total amount \\+ debit amount$")
     public void iVerifyBeforeTotalAmountAfterTotalAmountDebitAmount() throws Exception {
-        System.out.println("***************after_transfer_account  " + after_transfer_account);
-        System.out.println("***************before_transfer_account  " + before_transfer_account);
-        System.out.println("***************debitAmount  " + d_amount);
+//        System.out.println("***************after_transfer_account  " + after_transfer_account);
+//        System.out.println("***************before_transfer_account  " + before_transfer_account);
+//        System.out.println("***************debitAmount  " + d_amount);
         assertEquals(before_transfer_account,after_transfer_account + d_amount);
 
     }
 
     @And("^I verify before total amount = after total amount \\+ debit amount \\+ fee$")
     public void iVerifyBeforeTotalAmountAfterTotalAmountDebitAmountFee() throws Exception {
-        System.out.println("***************after_transfer_account  " + after_transfer_account);
-        System.out.println("***************before_transfer_account  " + before_transfer_account);
-        System.out.println("***************debit_Amount  " + d_amount);
-        System.out.println("***************Fee  " + d_fee);
+//        System.out.println("***************after_transfer_account  " + after_transfer_account);
+//        System.out.println("***************before_transfer_account  " + before_transfer_account);
+//        System.out.println("***************debit_Amount  " + d_amount);
+//        System.out.println("***************Fee  " + d_fee);
         assertEquals(before_transfer_account,after_transfer_account + d_amount + d_fee);
+    }
+
+    @And("^I verify before total amount = after total amount \\+ debit amount \\+ fee when upload file$")
+    public void verifyAmounTotalAfterUploadFile() throws Exception {
+//        System.out.println("***************after_transfer_account  " + after_transfer_account);
+//        System.out.println("***************before_transfer_account  " + before_transfer_account);
+//        System.out.println("***************debit_Amount  " + d_amount);
+//        System.out.println("***************Fee  " + d_transaction_total);
+//        System.out.println("***************Bulk Fee  " + d_bulkFee);
+        assertEquals(before_transfer_account,after_transfer_account + d_amount + d_transaction_total * d_bulkFee);
     }
 
     @And("^I do transaction with type is \"([^\"]*)\" and \"([^\"]*)\"$")
@@ -247,7 +286,7 @@ public class ibkSteps extends TestBase {
     public void iVerifyIsDisplayedInMiniStatement(String text1, String text2) throws Exception {
         waitElement(By.xpath("//table[@class='tableTemp']"));
         String actualString = driver.findElement(By.xpath("//table[@class='tableTemp']")).getText();
-        System.out.println("**************** Data table" + actualString);
+//        System.out.println("**************** Data table" + actualString);
         assertTrue(actualString.contains(text1));
         assertTrue(actualString.contains(text2));
     }
@@ -285,9 +324,10 @@ public class ibkSteps extends TestBase {
         }
         else if(type.equals("identity card")&& split.equals("No")) {
             try{
-                waitElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber"));
-                Select accountList = new Select(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")));
-                accountList.selectByVisibleText("045704070000966 (CTY CP HOANG YEN) - VND");
+                if(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")).isDisplayed()) {
+                    Select accountList = new Select(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")));
+                    accountList.selectByVisibleText("045704070000966 (CTY CP HOANG YEN) - VND");
+                }
             }
             catch (Exception e) {System.out.println("Error msg: " + e.getMessage());}
             waitElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME"));
@@ -305,6 +345,20 @@ public class ibkSteps extends TestBase {
             driver.findElement(By.name("FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
             driver.findElement(By.id("Sliptchck")).click();
             driver.findElement(By.xpath("//div[@class='div-group-button']/a[@onclick=' return doSubmit(BULKFUNDSTRANSFERFORM);']")).click();
+        }
+        else if(type.equals("identity card") && split.equals("Yes")){
+            try{
+                if(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")).isDisplayed()){
+                    Select accountList = new Select(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")));
+                    accountList.selectByVisibleText("045704070000966 (CTY CP HOANG YEN) - VND");
+                }
+            }
+            catch (Exception e) {System.out.println("Error msg: " + e.getMessage());}
+            waitElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME"));
+            driver.findElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
+            driver.findElement(By.id("Sliptchck")).click();
+            driver.findElement(By.name("BulkCMNDRequest/bulkCMND/narative")).sendKeys("AUTO DESCRIPTION" + " " + Instant.now().getEpochSecond());
+            driver.findElement(By.id("kkkkkout")).click();
         }
 
     }
@@ -496,7 +550,18 @@ public class ibkSteps extends TestBase {
                 Select accountList = new Select(driver.findElement(By.name("TransactionType")));
                 accountList.selectByVisibleText(type);
                 driver.findElement(By.id("tags")).sendKeys(cardNumber);
+                driver.findElement(By.id("benBankAuto")).click();
+                waitElement(By.id("benBankAuto"));
                 driver.findElement(By.id("benBankAuto")).sendKeys(bank);
+                Thread.sleep(1000);
+                List<WebElement> bankNameList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='value']/span"));
+                for (int i = 0; i < bankNameList.size(); i++) {
+                    System.out.println("bank name list ============   " + bankNameList.get(i).getText());
+                    if (bankNameList.get(i).getText().equals(bank)) {
+                        bankNameList.get(i).click();
+                        Thread.sleep(1000);
+                    }
+                }
                 driver.findElement(By.name("IBFTRequest/IbftObject/amountFormat")).sendKeys(amount);
                 driver.findElement(By.name("IBFTRequest/IbftObject/remarks")).sendKeys(description);
                 driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
@@ -547,5 +612,15 @@ public class ibkSteps extends TestBase {
         System.out.println("============ data Table" + tableList);
         System.out.println("============ transaction_number" + s_number);
         assertTrue(tableList.contains(s_number));
+    }
+
+    @And("^I get bulk payment of wages fee$")
+    public void iGetBulkPaymentOfWagesFee() throws Exception {
+        getBulkFee();
+    }
+
+    @And("^I get \"([^\"]*)\" transaction total when uploading file$")
+    public void iGetTransactionTotalWhenUploadingFile(String name) throws Exception {
+        getTransactionNumber(name);
     }
 }
