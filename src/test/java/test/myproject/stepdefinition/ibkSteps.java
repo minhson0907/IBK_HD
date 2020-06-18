@@ -10,12 +10,17 @@ import gherkin.lexer.Th;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
+import test.myproject.base.Hooks;
 import test.myproject.base.TestBase;
+import test.myproject.utils.DataHelper;
 
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.time.Instant;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.TimeZone;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -29,6 +34,12 @@ public class ibkSteps extends TestBase {
     private String s_number = "";
     private double d_bulkFee = 0;
     private double d_transaction_total = 0;
+
+    public List<HashMap<String,String>> datamap;
+    public ibkSteps()
+    {
+        datamap = DataHelper.data(System.getProperty("user.dir")+"//data//userdata.xlsx","Sheet1");
+    }
 
     @Given("^I open (IBK|Admin) page$")
     public void iOpenHomepage(String type) throws Exception {
@@ -50,23 +61,42 @@ public class ibkSteps extends TestBase {
         Thread.sleep(2000);
     }
 
-    @Then("^I login (KHCN|KHDN) with \"([^\"]*)\" and \"([^\"]*)\"$")
-    public void login(String type,String userName, String passWord) throws Exception {
+    @Then("^I login KHCN with \"([^\"]*)\" and \"([^\"]*)\"$")
+    public void loginKHCN(String userName, String passWord) throws Exception {
+            driver.switchTo().frame("main").switchTo().frame("tran");
+//        try{
+//            if(driver.findElement(By.xpath("//a[@class='btn btn-warning']")).isEnabled()){
+//                driver.findElement(By.xpath("//a[@class='btn btn-warning']")).click();
+//            }
+//        }catch (Exception e){System.out.println("Error:  " + e.getMessage());}
+            driver.findElement(By.id("txtUserName")).clear();
+            driver.findElement(By.id("txtUserName")).sendKeys(datamap.get(0).get("userKHCN"));
+            driver.findElement(By.id("txtPassKey")).clear();
+            driver.findElement(By.id("txtPassKey")).sendKeys(datamap.get(0).get("password"));
+            driver.findElement(By.id("Login")).click();
+    }
+
+    @Then("^As an (input|approval) user, I login KHDN with \"([^\"]*)\" and \"([^\"]*)\"$")
+    public void loginKHDN(String type,String userName, String passWord) throws Exception {
         driver.switchTo().frame("main").switchTo().frame("tran");
-        try{
-            if(driver.findElement(By.xpath("//a[@class='btn btn-warning']")).isEnabled()){
-                driver.findElement(By.xpath("//a[@class='btn btn-warning']")).click();
-            }
-        }catch (Exception e){System.out.println("Error:  " + e.getMessage());}
-        if (type.equals("KHDN")){
-            // Change tab to KHDN
-            driver.findElement(By.id("tab-corp")).click();
+        //Close Popup
+//        try{
+//            if(driver.findElement(By.xpath("//a[@class='btn btn-warning']")).isEnabled()){
+//                driver.findElement(By.xpath("//a[@class='btn btn-warning']")).click();
+//            }
+//        }catch (Exception e){System.out.println("Error:  " + e.getMessage());}
+        // Change tab to KHDN
+        driver.findElement(By.id("tab-corp")).click();
+        if (type.equals("input")){
+            driver.findElement(By.id("txtUserName")).clear();
+            driver.findElement(By.id("txtUserName")).sendKeys(datamap.get(0).get("userKHDNnhap"));
         }
-        else
-        driver.findElement(By.id("txtUserName")).clear();
-        driver.findElement(By.id("txtUserName")).sendKeys(userName);
+        else{
+            driver.findElement(By.id("txtUserName")).clear();
+            driver.findElement(By.id("txtUserName")).sendKeys(datamap.get(0).get("userKHDNduyet"));
+        }
         driver.findElement(By.id("txtPassKey")).clear();
-        driver.findElement(By.id("txtPassKey")).sendKeys(passWord);
+        driver.findElement(By.id("txtPassKey")).sendKeys(datamap.get(0).get("password"));
         driver.findElement(By.id("Login")).click();
     }
 
@@ -142,7 +172,7 @@ public class ibkSteps extends TestBase {
 
     @And("^I get amount total after doing transaction$")
     public void iGetAmountTotalAfterDoingTransaction() throws Exception {
-        Thread.sleep(60000);
+        Thread.sleep(30000);
         // back to Home page
         driver.findElement(By.xpath("//li[@class='dropdown']/a[@class='js-activated']")).click();
         waitElement(By.xpath("//table[@class='tableTemp']//td[@class='td-head']/p[contains(text(),'Tài khoản tiền gửi')]"));
@@ -152,12 +182,17 @@ public class ibkSteps extends TestBase {
         System.out.println("----------------------after transfer account " + test);
     }
 
-    @And("^I transfer from \"([^\"]*)\" to \"([^\"]*)\" account, \"([^\"]*)\" amount and \"([^\"]*)\" description with fee payer is \"([^\"]*)\"$")
-    public void internalTransferWithSender(String fromAccount, String toAccount,String amount, String description, String feePayer) throws Exception {
+    @And("^As (KHCN|KHDN), I transfer from \"([^\"]*)\" to \"([^\"]*)\" account, \"([^\"]*)\" amount and \"([^\"]*)\" description with fee payer is \"([^\"]*)\"$")
+    public void internalTransferWithSender(String type,String fromAccount, String toAccount,String amount, String description, String feePayer) throws Exception {
         try{
             if(driver.findElement(By.name("ftRequest/fundsTransfer/fromAccount/accountNumber")).isEnabled()){
                 Select accountList = new Select(driver.findElement(By.name("ftRequest/fundsTransfer/fromAccount/accountNumber")));
-                accountList.selectByVisibleText(fromAccount);
+                if(type.equals("KHCN")){
+                    accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHCN"));
+                }
+                else{
+                    accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHDN"));
+                }
             }
         }
         catch (Exception e){System.out.println("Error:  " + e.getMessage());}
@@ -166,7 +201,7 @@ public class ibkSteps extends TestBase {
         Select feePayerList = new Select(driver.findElement(By.id("tags_charge")));
         feePayerList.selectByVisibleText(feePayer);
         driver.findElement(By.name("ftRequest/fundsTransfer/remarks")).sendKeys(description);
-        driver.findElement(By.xpath("//a[@onclick='return doSubmit(myform);' and contains(text(),'Tiếp Tục')]")).click();
+        driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
     }
 
     @Then("^I input the code to complete the transaction$")
@@ -229,7 +264,6 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         List<WebElement> bankNameList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='description']/span"));
         for (int i = 0; i < bankNameList.size(); i++) {
-            System.out.println("bank name list ============   " + bankNameList.get(i).getText());
             if (bankNameList.get(i).getText().equals(bankName)) {
                 bankNameList.get(i).click();
                 Thread.sleep(1000);
@@ -242,7 +276,6 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         List<WebElement> bankCityList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='description']/span"));
         for (int i = 0; i < bankCityList.size(); i++) {
-            System.out.println("bank city list ============   " + bankCityList.get(i).getText());
             if (bankCityList.get(i).getText().equals(city)) {
                 bankCityList.get(i).click();
                 Thread.sleep(1000);
@@ -255,7 +288,6 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         List<WebElement> bankBranchList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='description']/span"));
         for (int i = 0; i < bankBranchList.size(); i++) {
-            System.out.println("bank branch list ============   " + bankBranchList.get(i).getText());
             if (bankBranchList.get(i).getText().equals(branch)) {
                 bankBranchList.get(i).click();
                 Thread.sleep(1000);
@@ -263,14 +295,13 @@ public class ibkSteps extends TestBase {
         }
         List<WebElement> feePayerList = driver.findElements(By.xpath("//table[@class='data-table']//td[@class='val']//option"));
         for (int i = 0; i < feePayerList.size(); i++) {
-            System.out.println("Fee Payer list ============   " + feePayerList.get(i).getText());
             if (feePayerList.get(i).getText().equals(feePayer)) {
                 Thread.sleep(1000);
                 feePayerList.get(i).click();
             }
         }
         driver.findElement(By.name("remittanceRequest/remittance/paymentDetails1")).sendKeys(description);
-        driver.findElement(By.xpath("//a[@onclick='confirmLoopRemittance();' and contains(text(),'Tiếp Tục')]")).click();
+        driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
     }
 
     @Then("^I verify \"([^\"]*)\" \"([^\"]*)\" is displayed after doing transaction successfully$")
@@ -297,7 +328,6 @@ public class ibkSteps extends TestBase {
         driver.findElement(By.id("chk_0")).click();
         waitElement(By.xpath("//div[@class='div-group-button']/a[@onclick='  doApprovalAccept(document.forms[0]);']"));
         driver.findElement(By.xpath("//div[@class='div-group-button']/a[@onclick='  doApprovalAccept(document.forms[0]);']")).click();
-        Thread.sleep(2000);
     }
 
     @Then("^I (approve|decline) the above transaction$")
@@ -320,55 +350,56 @@ public class ibkSteps extends TestBase {
             waitElement(By.name("FILENAME"));
             driver.findElement(By.name("FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
             driver.findElement(By.name("REMARKS")).sendKeys("AUTO DESCRIPTION" + " " + Instant.now().getEpochSecond());
-            driver.findElement(By.xpath("//div[@class='div-group-button']/a[@onclick='return doSubmit(BULKFUNDSTRANSFERFORM);']")).click();
-        }
-        else if(type.equals("identity card")&& split.equals("No")) {
-            try{
-                if(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")).isDisplayed()) {
-                    Select accountList = new Select(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")));
-                    accountList.selectByVisibleText("045704070000966 (CTY CP HOANG YEN) - VND");
-                }
-            }
-            catch (Exception e) {System.out.println("Error msg: " + e.getMessage());}
-            waitElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME"));
-            driver.findElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
-            driver.findElement(By.name("BulkCMNDRequest/bulkCMND/narative")).sendKeys("AUTO DESCRIPTION" + " " + Instant.now().getEpochSecond());
-            driver.findElement(By.id("kkkkkout")).click();
+            driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
         }
         else if (type.equals("payment of wages")&& split.equals("No")){
             waitElement(By.name("FILENAME"));
             driver.findElement(By.name("FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
-            driver.findElement(By.xpath("//div[@class='div-group-button']/a[@onclick=' return doSubmit(BULKFUNDSTRANSFERFORM);']")).click();
+            driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
         }
         else if(type.equals("payment of wages") && split.equals("Yes")){
             waitElement(By.name("FILENAME"));
             driver.findElement(By.name("FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
             driver.findElement(By.id("Sliptchck")).click();
-            driver.findElement(By.xpath("//div[@class='div-group-button']/a[@onclick=' return doSubmit(BULKFUNDSTRANSFERFORM);']")).click();
+            driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
         }
-        else if(type.equals("identity card") && split.equals("Yes")){
-            try{
-                if(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")).isDisplayed()){
-                    Select accountList = new Select(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")));
-                    accountList.selectByVisibleText("045704070000966 (CTY CP HOANG YEN) - VND");
-                }
+    }
+
+    @And("^I upload \"([^\"]*)\" file from \"([^\"]*)\" account to do transferring by \"([^\"]*)\" with separated to single transaction is \"([^\"]*)\"$")
+    public void iUploadFileFromAccountToDoTransferringByWithSeparatedToSingleTransactionIs(String filePath, String fromAccount, String type, String split) throws Exception {
+        try{
+            if(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")).isDisplayed()){
+                Select accountList = new Select(driver.findElement(By.name("BulkCMNDRequest/bulkCMND/fromAccount/accountNumber")));
+                accountList.selectByVisibleText(fromAccount);
             }
-            catch (Exception e) {System.out.println("Error msg: " + e.getMessage());}
+        }
+        catch (Exception e) {System.out.println("Error msg: " + e.getMessage());}
+        if(type.equals("identity card") && split.equals("No")) {
             waitElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME"));
             driver.findElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
-            driver.findElement(By.id("Sliptchck")).click();
             driver.findElement(By.name("BulkCMNDRequest/bulkCMND/narative")).sendKeys("AUTO DESCRIPTION" + " " + Instant.now().getEpochSecond());
             driver.findElement(By.id("kkkkkout")).click();
         }
-
+          else if(type.equals("identity card") && split.equals("Yes")){
+              waitElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME"));
+              driver.findElement(By.name("BulkCMNDRequest/bulkCMND/FILENAME")).sendKeys(System.getProperty("user.dir") + filePath);
+              driver.findElement(By.id("Sliptchck")).click();
+              driver.findElement(By.name("BulkCMNDRequest/bulkCMND/narative")).sendKeys("AUTO DESCRIPTION" + " " + Instant.now().getEpochSecond());
+              driver.findElement(By.id("kkkkkout")).click();
+          }
     }
 
-    @And("^I choose \"([^\"]*)\" account$")
-    public void iChooseAccount(String account) throws Exception {
+    @And("^As (KHCN|KHDN), I choose \"([^\"]*)\" account$")
+    public void iChooseAccount(String type, String account) throws Exception {
         try{
             if(driver.findElement(By.name("ACCOUNTNO")).isEnabled()){
                 Select listAccount =new Select(driver.findElement(By.name("ACCOUNTNO")));
-                listAccount.selectByVisibleText(account);
+                if(type.equals("KHCN")){
+                    listAccount.selectByVisibleText(datamap.get(0).get("fromaccountKHCN"));
+                }
+                else{
+                    listAccount.selectByVisibleText(datamap.get(0).get("fromaccountKHDN"));
+                }
             }
         }
         catch (Exception e){System.out.println("Error message: " + e.getMessage());}
@@ -388,9 +419,9 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         driver.findElement(By.xpath("//li[@class='ui-menu-item']")).click();
         Thread.sleep(1000);
-        driver.findElement(By.xpath("//input[@onkeyup='convertCyy(this,document.forms[0].elements[\"ip_amount\"])']")).sendKeys(amount);
+        driver.findElement(By.id("ip_amountformat")).sendKeys(amount);
         driver.findElement(By.id("id_remarks")).sendKeys(note);
-        driver.findElement(By.xpath("//a[@onclick='return doSubmit(document.forms[0]);']")).click();
+        driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
     }
 
     @Then("^I pay from \"([^\"]*)\" with \"([^\"]*)\" service type, \"([^\"]*)\" service provider, \"([^\"]*)\" customer code and \"([^\"]*)\" note$")
@@ -408,47 +439,82 @@ public class ibkSteps extends TestBase {
         listServiceProvider.selectByVisibleText(serviceProvider);
         driver.findElement(By.id("autofield")).sendKeys(code);
         driver.findElement(By.name("bpRequest/remarks")).sendKeys(note);
-        driver.findElement(By.xpath("//a[@onclick='return doSubmit(document.forms[0]);']")).click();
+        driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
     }
 
-    @Then("^I transfer from \"([^\"]*)\" to \"([^\"]*)\", \"([^\"]*)\" amount, \"([^\"]*)\" name, \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" start date, \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" end date, \"([^\"]*)\" \"([^\"]*)\" frequency and \"([^\"]*)\" notice$")
-    public void iTransferFromToAmountNameStartDateEndDateFrequencyAndNotice(String fromAccount, String toAccount, String amount, String name, String startDay, String startMonth, String startYear, String endDay, String endMonth, String endYear, String freTime, String feeMonth, String notice) throws Exception {
-        try{
-            if(driver.findElement(By.name("FROMACCOUNT")).isEnabled()){
-                Select accountList = new Select(driver.findElement(By.name("FROMACCOUNT")));
-                accountList.selectByVisibleText(fromAccount);
+    @Then("^As (KHCN|KHDN), I transfer from \"([^\"]*)\" to \"([^\"]*)\", \"([^\"]*)\" amount, \"([^\"]*)\" name, \"([^\"]*)\" \"([^\"]*)\" frequency and \"([^\"]*)\" notice$")
+    public void iTransferFromToAmountNameStartDateEndDateFrequencyAndNotice(String type, String fromAccount, String toAccount, String amount, String name, String freTime, String feeMonth, String notice) throws Exception {
+            try{
+                if(driver.findElement(By.name("FROMACCOUNT")).isEnabled()){
+                    Select accountList = new Select(driver.findElement(By.name("FROMACCOUNT")));
+                    if(type.equals("KHDN")){
+                        accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHDN"));
+                    }
+                    else{
+                        accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHCN"));
+                    }
+                }
             }
-        }
-        catch (Exception e){System.out.println("Error:  " + e.getMessage());}
+            catch (Exception e){System.out.println("Error:  " + e.getMessage());}
         driver.findElement(By.name("TOACCOUNT")).sendKeys(toAccount);
         driver.findElement(By.name("TRANSFERAMOUNTFORMAT")).sendKeys(amount);
         driver.findElement(By.name("SCHEDULENAME")).sendKeys(name + " " + Instant.now().getEpochSecond());
+        Calendar now = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        String s_day = String.valueOf(now.get(Calendar.DAY_OF_MONTH));
+        String s_month = String.valueOf(now.get(Calendar.MONTH) + 1);
+        if(s_month.length()==1){
+            String s_extra_month = 0 + s_month;
+            driver.findElement(By.name("STARTMONTH")).clear();
+            driver.findElement(By.name("STARTMONTH")).sendKeys(s_extra_month);
+        }
+        else{
+            driver.findElement(By.name("STARTMONTH")).clear();
+            driver.findElement(By.name("STARTMONTH")).sendKeys(s_month);
+        }
+        String s_year = String.valueOf(now.get(Calendar.YEAR));
+        String e_day = String.valueOf(now.get(Calendar.DAY_OF_MONTH) + 1);
+        String e_month = String.valueOf(now.get(Calendar.MONTH) + 1);
+        String e_year = String.valueOf(now.get(Calendar.YEAR));
         driver.findElement(By.name("STARTDAY")).clear();
-        driver.findElement(By.name("STARTDAY")).sendKeys(startDay);
-        driver.findElement(By.name("STARTMONTH")).clear();
-        driver.findElement(By.name("STARTMONTH")).sendKeys(startMonth);
+        driver.findElement(By.name("STARTDAY")).sendKeys(s_day);
+//        driver.findElement(By.name("STARTMONTH")).clear();
+//        driver.findElement(By.name("STARTMONTH")).sendKeys(s_month);
         driver.findElement(By.name("STARTYEAR")).clear();
-        driver.findElement(By.name("STARTYEAR")).sendKeys(startYear);
+        driver.findElement(By.name("STARTYEAR")).sendKeys(s_year);
         driver.findElement(By.name("ENDDAY")).clear();
-        driver.findElement(By.name("ENDDAY")).sendKeys(endDay);
-        driver.findElement(By.name("ENDMONTH")).clear();
-        driver.findElement(By.name("ENDMONTH")).sendKeys(endMonth);
+        driver.findElement(By.name("ENDDAY")).sendKeys(e_day);
+//        driver.findElement(By.name("ENDMONTH")).clear();
+//        driver.findElement(By.name("ENDMONTH")).sendKeys(e_month);
+        if(e_month.length()==1){
+            String e_extra_month = 0 + e_month;
+            driver.findElement(By.name("STARTMONTH")).clear();
+            driver.findElement(By.name("STARTMONTH")).sendKeys(e_extra_month);
+        }
+        else{
+            driver.findElement(By.name("STARTMONTH")).clear();
+            driver.findElement(By.name("STARTMONTH")).sendKeys(e_month);
+        }
         driver.findElement(By.name("ENDYEAR")).clear();
-        driver.findElement(By.name("ENDYEAR")).sendKeys(endYear);
+        driver.findElement(By.name("ENDYEAR")).sendKeys(e_year);
         driver.findElement(By.name("PERIOD")).clear();
         driver.findElement(By.name("PERIOD")).sendKeys(freTime);
         driver.findElement(By.name("PERIODFREQUENCY")).sendKeys(feeMonth);
         Select listNotice = new Select(driver.findElement(By.name("NOTIFICATION")));
         listNotice.selectByVisibleText(notice);
-        driver.findElement(By.xpath("//a[@onclick='return doSubmit(myform)']")).click();
+        driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
     }
 
-    @Then("^I transfer from \"([^\"]*)\" with \"([^\"]*)\" amount to \"([^\"]*)\" account number, \"([^\"]*)\" account name, \"([^\"]*)\" bank name, \"([^\"]*)\" city, \"([^\"]*)\" branch, \"([^\"]*)\" fee payer and \"([^\"]*)\" description, \"([^\"]*)\" name, \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" start date, \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" end date, \"([^\"]*)\" \"([^\"]*)\" frequency and \"([^\"]*)\" notice$")
-    public void iTransferScheduleLocalTransfer(String fromAccount, String amount, String toAccount, String accountName, String bankName, String city, String branch, String feePayer, String description, String name, String startDay, String startMonth, String startYear, String endDay, String endMonth, String endYear, String freTime, String feeMonth, String notice) throws Exception {
+    @Then("^As (KHCN|KHDN), I transfer from \"([^\"]*)\" with \"([^\"]*)\" amount to \"([^\"]*)\" account number, \"([^\"]*)\" account name, \"([^\"]*)\" bank name, \"([^\"]*)\" city, \"([^\"]*)\" branch, \"([^\"]*)\" fee payer and \"([^\"]*)\" description, \"([^\"]*)\" name, \"([^\"]*)\" \"([^\"]*)\" frequency and \"([^\"]*)\" notice$")
+    public void iTransferScheduleLocalTransfer(String type, String fromAccount, String amount, String toAccount, String accountName, String bankName, String city, String branch, String feePayer, String description, String name, String freTime, String feeMonth, String notice) throws Exception {
         try{
             if(driver.findElement(By.name("recurringRequest/recurringRemit/customerAccount/accountNumber")).isEnabled()){
                 Select accountList = new Select(driver.findElement(By.name("recurringRequest/recurringRemit/customerAccount/accountNumber")));
-                accountList.selectByVisibleText(fromAccount);
+                if(type.equals("KHDN")){
+                    accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHDN"));
+                }
+                else{
+                    accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHCN"));
+                }
             }
         }
         catch (Exception e){System.out.println("Error:  " + e.getMessage());}
@@ -465,7 +531,6 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         List<WebElement> bankNameList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='description']/span"));
         for (int i = 0; i < bankNameList.size(); i++) {
-            System.out.println("bank name list ============   " + bankNameList.get(i).getText());
             if (bankNameList.get(i).getText().equals(bankName)) {
                 bankNameList.get(i).click();
                 Thread.sleep(1000);
@@ -478,7 +543,6 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         List<WebElement> bankCityList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='description']/span"));
         for (int i = 0; i < bankCityList.size(); i++) {
-            System.out.println("bank city list ============   " + bankCityList.get(i).getText());
             if (bankCityList.get(i).getText().equals(city)) {
                 bankCityList.get(i).click();
                 Thread.sleep(1000);
@@ -491,7 +555,6 @@ public class ibkSteps extends TestBase {
         Thread.sleep(1000);
         List<WebElement> bankBranchList = driver.findElements(By.xpath("//a[@class='ui-corner-all']/div[@class='list_item_container']/div[@class='description']/span"));
         for (int i = 0; i < bankBranchList.size(); i++) {
-            System.out.println("bank branch list ============   " + bankBranchList.get(i).getText());
             if (bankBranchList.get(i).getText().equals(branch)) {
                 bankBranchList.get(i).click();
                 Thread.sleep(1000);
@@ -501,25 +564,32 @@ public class ibkSteps extends TestBase {
         feePayerList.selectByVisibleText(feePayer);
         driver.findElement(By.name("recurringRequest/recurringRemit/paymentDetails1")).sendKeys(description);
         driver.findElement(By.name("recurringRequest/recurringRemit/scheduleName")).sendKeys(name);
+        Calendar now = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        String s_day = String.valueOf(now.get(Calendar.YEAR));
+        String s_month = String.valueOf(now.get(Calendar.MONTH) + 1);
+        String s_year = String.valueOf(now.get(Calendar.DAY_OF_MONTH));
+        String e_day = String.valueOf(now.get(Calendar.DAY_OF_MONTH) + 1);
+        String e_month = String.valueOf(now.get(Calendar.MONTH) + 1);
+        String e_year = String.valueOf(now.get(Calendar.YEAR));
         driver.findElement(By.name("recurringRequest/recurringRemit/startDate/day")).clear();
-        driver.findElement(By.name("recurringRequest/recurringRemit/startDate/day")).sendKeys(startDay);
+        driver.findElement(By.name("recurringRequest/recurringRemit/startDate/day")).sendKeys(s_day);
         driver.findElement(By.name("recurringRequest/recurringRemit/startDate/month")).clear();
-        driver.findElement(By.name("recurringRequest/recurringRemit/startDate/month")).sendKeys(startMonth);
+        driver.findElement(By.name("recurringRequest/recurringRemit/startDate/month")).sendKeys(s_month);
         driver.findElement(By.name("recurringRequest/recurringRemit/startDate/year")).clear();
-        driver.findElement(By.name("recurringRequest/recurringRemit/startDate/year")).sendKeys(startYear);
+        driver.findElement(By.name("recurringRequest/recurringRemit/startDate/year")).sendKeys(s_year);
         driver.findElement(By.name("recurringRequest/recurringRemit/endDate/day")).clear();
-        driver.findElement(By.name("recurringRequest/recurringRemit/endDate/day")).sendKeys(endDay);
+        driver.findElement(By.name("recurringRequest/recurringRemit/endDate/day")).sendKeys(e_day);
         driver.findElement(By.name("recurringRequest/recurringRemit/endDate/month")).clear();
-        driver.findElement(By.name("recurringRequest/recurringRemit/endDate/month")).sendKeys(endMonth);
+        driver.findElement(By.name("recurringRequest/recurringRemit/endDate/month")).sendKeys(e_month);
         driver.findElement(By.name("recurringRequest/recurringRemit/endDate/year")).clear();
-        driver.findElement(By.name("recurringRequest/recurringRemit/endDate/year")).sendKeys(endYear);
+        driver.findElement(By.name("recurringRequest/recurringRemit/endDate/year")).sendKeys(e_year);
         driver.findElement(By.name("FREQNUM")).clear();
         driver.findElement(By.name("FREQNUM")).sendKeys(freTime);
         driver.findElement(By.name("FREQLIST")).sendKeys(feeMonth);
         Select listNotice = new Select(driver.findElement(By.name("recurringRequest/recurringRemit/notice")));
         listNotice.selectByVisibleText(notice);
         driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
-
+            Thread.sleep(50000);
     }
 
     @And("^I get \"([^\"]*)\" fee from above transaction$")
@@ -527,12 +597,18 @@ public class ibkSteps extends TestBase {
             getFeefrom(name);
     }
 
-    @And("^I transfer from \"([^\"]*)\" with \"([^\"]*)\" transaction type, \"([^\"]*)\" number, \"([^\"]*)\" bank, \"([^\"]*)\" amount and \"([^\"]*)\" description$")
-    public void iTransferFromWithTransactionTypeCardNumberAmountAndDescription(String fromAccount, String type, String cardNumber, String bank, String amount, String description) throws Exception {
+    @And("^As (KHCN|KHDN), I transfer from \"([^\"]*)\" with \"([^\"]*)\" transaction type, \"([^\"]*)\" number, \"([^\"]*)\" bank, \"([^\"]*)\" amount and \"([^\"]*)\" description$")
+    public void iTransferFromWithTransactionTypeCardNumberAmountAndDescription(String user, String fromAccount, String type, String cardNumber, String bank, String amount, String description) throws Exception {
         try{
             if(driver.findElement(By.name("IBFTRequest/IbftObject/fromAccount/accountNumber")).isEnabled()){
                 Select accountList = new Select(driver.findElement(By.name("IBFTRequest/IbftObject/fromAccount/accountNumber")));
-                accountList.selectByVisibleText(fromAccount);
+                if(user.equals("KHDN")){
+                    accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHDN"));
+                }
+                else{
+                    accountList.selectByVisibleText(datamap.get(0).get("fromaccountKHCN"));
+                }
+
             }
         }
         catch (Exception e){System.out.println("Error:  " + e.getMessage());}
@@ -623,4 +699,5 @@ public class ibkSteps extends TestBase {
     public void iGetTransactionTotalWhenUploadingFile(String name) throws Exception {
         getTransactionNumber(name);
     }
+
 }
