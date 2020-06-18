@@ -4,17 +4,17 @@
     @KHDN_bulk_local_transfer-01
     Scenario: I do transaction successfully with
       Given I open IBK page
-      When I login KHDN with "autotestnhap" and "abc123"
+      When As an input user, I login KHDN with "autotestnhap" and "abc123"
       And I get amount total before doing transaction
       Then I do transaction with type is "TRANSFER" and "Chuyển khoản theo lô trong HDBank"
-      And I upload "\data\CK lo trong\Ck lo trong.xls" file to do transferring by "bulk local" with separated to single transaction is "No"
+      And I upload "\data\19c\CK lo trong\Ck lo trong.xls" file to do transferring by "bulk local" with separated to single transaction is "No"
       And I verify "Tổng số giao dịch" "10" is displayed after doing transaction successfully
       And I verify "Tổng giá trị giao dịch quy đổi theo loại tiền" "27,891 VND" is displayed after doing transaction successfully
       And I verify "Phí giao dịch" "0 VND" is displayed after doing transaction successfully
       And I approve the above transaction
       And I verify "" "Giao dịch đã được chấp nhận và đang chờ duyệt với số bút toán" is displayed after doing transaction successfully
       Given I open IBK page
-      Then I login KHDN with "autotestduyet" and "abc123"
+      Then As an approval user, I login KHDN with "autotestduyet" and "abc123"
       And I do transaction with type is "APPROVAL" and "Giao dịch chờ phê duyệt"
       And I search the above transaction
       And I get "Tổng giá trị giao dịch quy đổi theo loại tiền" debit amount from above transaction
