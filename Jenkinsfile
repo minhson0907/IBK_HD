@@ -7,8 +7,6 @@ node {
                bat label: 'Clean project', script: 'mvn clean'
                bat label: 'run e2e test and generate report', script: 'mvn test verify'
                }
-       stage('Public Report HTML to Jenkins') {
-               cucumber failedFeaturesNumber: -1,failedScenarioNumber: -1,failedStepNumber: -1,fileIncludePattern:'**/*.json
-               }
+
                         }
      }
