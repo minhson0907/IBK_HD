@@ -172,7 +172,7 @@ public class ibkSteps extends TestBase {
 
     @And("^I get amount total after doing transaction$")
     public void iGetAmountTotalAfterDoingTransaction() throws Exception {
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         // back to Home page
         driver.findElement(By.xpath("//li[@class='dropdown']/a[@class='js-activated']")).click();
         waitElement(By.xpath("//table[@class='tableTemp']//td[@class='td-head']/p[contains(text(),'Tài khoản tiền gửi')]"));
@@ -400,10 +400,10 @@ public class ibkSteps extends TestBase {
                 else{
                     listAccount.selectByVisibleText(datamap.get(0).get("fromaccountKHDN"));
                 }
+                driver.findElement(By.id("kkkkkout")).click();
             }
         }
         catch (Exception e){System.out.println("Error message: " + e.getMessage());}
-        driver.findElement(By.id("kkkkkout")).click();
     }
 
     @Then("^I top up from \"([^\"]*)\" to \"([^\"]*)\" agent code with \"([^\"]*)\" amount of payment and \"([^\"]*)\" note$")

@@ -4,9 +4,9 @@ import cucumber.api.CucumberOptions;
 import cucumber.api.testng.AbstractTestNGCucumberTests;
 
 @CucumberOptions(
-        features = {"src/test/java/test/myproject/KHDN"},
+        features = {"src/test/java/test/myproject/KHCN"},
         glue = "test.myproject",
-        tags = {"@KHDN_schedule_fund_transfer-01"},
+        tags = {"@KHCN_internal_transfer-04"},
         plugin = {
                 "html:target/result",
                 "pretty",

@@ -1,7 +1,7 @@
-@HDbank @KHDN_interbank_transfer
-  Feature: Interbank Transfer
+@HDbank @KHDN_exterbank_transfer
+  Feature: Exterbank Transfer
 
-    @KHDN_interbank_transfer-01
+    @KHDN_exterbank_transfer-01
     Scenario: I do an interbank transfer transaction successfully with charged fee is Người chuyển
       Given I open IBK page
       Then As an input user, I login KHDN with "son_nhap" and "abc123"
@@ -43,7 +43,7 @@
       And I get amount total after doing transaction
       And I verify before total amount = after total amount + debit amount + fee
 
-    @KHDN_interbank_transfer-02
+    @KHDN_exterbank_transfer-02
     Scenario: I verify the transaction is displayed in mini statement
       Given I open IBK page
       When As an input user, I login KHDN with "son_nhap" and "abc123"
@@ -52,7 +52,7 @@
       And I verify "Loại giao dịch: GD GHI NO TU TT THANH TOAN" "200,000" is displayed in mini statement
       And I verify "Nội dung" "AUTO DESCRIPTION" is displayed in mini statement
 
-    @KHDN_interbank_transfer-03
+    @KHDN_exterbank_transfer-03
     Scenario: I do an interbank transfer transaction successfully with charged fee is Người hưởng
       Given I open IBK page
       Then As an input user, I login KHDN with "son_nhap" and "abc123"
@@ -93,7 +93,7 @@
       And I get amount total after doing transaction
       And I verify before total amount = after total amount + debit amount
 
-    @KHDN_interbank_transfer-04
+    @KHDN_exterbank_transfer-04
     Scenario: I verify the after limit = the before limit - debit amount with charged fee is Người hưởng
       Given I open Admin page
       When I login ADMIN with "RM_LEDTH" and "abc123"
@@ -137,7 +137,7 @@
       And I get after transferring limit "Chuyển tiền ngoài hệ thống" with above user
       Then I verify after transferring limit = before transferring limit - "200000"
 
-    @KHDN_interbank_transfer-05
+    @KHDN_exterbank_transfer-05
     Scenario: I verify the after limit = the before limit - debit amount with charged fee is Người chuyển
       Given I open Admin page
       When I login ADMIN with "RM_LEDTH" and "abc123"
@@ -181,7 +181,7 @@
       And I get after transferring limit "Chuyển tiền ngoài hệ thống" with above user
       Then I verify after transferring limit = before transferring limit - "200000"
 
-    @KHDN_interbank_transfer-06
+    @KHDN_exterbank_transfer-06
     Scenario: I verify the transaction is not approved when transferring with amount > limit amount per transaction
       Given I open Admin page
       When I login ADMIN with "RM_LEDTH" and "abc123"
@@ -227,7 +227,7 @@
       Then I approve the above request
       And I verify "" "Yêu cầu được duyệt thành công." is displayed after doing transaction successfully
 
-    @KHDN_interbank_transfer-07
+    @KHDN_exterbank_transfer-07
     Scenario: I verify the transaction is not approved when transferring with amount > limit amount per day
       Given I open Admin page
       When I login ADMIN with "RM_LEDTH" and "abc123"
@@ -257,7 +257,7 @@
       And I search the above transaction
       And I verify "Số tiền giao dịch" "vượt quá hạn mức giao dịch trong ngày của tài khoản" is displayed after doing transaction successfully
 
-    @KHDN_interbank_transfer-08
+    @KHDN_exterbank_transfer-08
     Scenario: I verify the transaction is not approved when transferring with limit = 0
       Given I open Admin page
       When I login ADMIN with "RM_LEDTH" and "abc123"

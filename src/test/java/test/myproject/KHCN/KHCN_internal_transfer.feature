@@ -52,7 +52,7 @@
       And I verify "Nội dung" "AUTO DESCRIPTION" is displayed in mini statement
 
     @KHCN_internal_transfer-03
-    Scenario: I do transaction successfully with myself and charged fee is Bên chuyển/Bên nhận
+    Scenario: I do transaction successfully with accounts in a cif and charged fee is Bên chuyển/Bên nhận
       Given I open IBK page
       Then I login KHCN with "tamtrg09" and "abc123"
       And I get amount total before doing transaction
@@ -86,6 +86,7 @@
       Then I verify "Số tiền ghi có" "198,350" is displayed after doing transaction successfully
       Then I verify "Số tiền phí" "VND 1,650" is displayed after doing transaction successfully
       Then I verify "Phí tính cho bên" "Bên nhận" is displayed after doing transaction successfully
+      And I get "Số tiền ghi có" debit amount from above transaction
       And I input the code to complete the transaction
       Then I verify "" "Giao dịch thành công." is displayed after doing transaction successfully
       Given I open Admin page
@@ -121,7 +122,7 @@
       Then I verify after transferring limit = before transferring limit - "200000"
 
     @KHCN_internal_transfer-06
-    Scenario: I verify the after limit = the before limit - debit amount with same person but different account
+    Scenario: I verify the after limit = the before limit - debit amount when transferring with accounts in a CIF
       Given I open Admin page
       When I login ADMIN with "RM_LEDTH" and "abc123"
       Then As KHCN, I search the limit with user "tamtrg09"
@@ -130,11 +131,11 @@
       Given I open IBK page
       Then I login KHCN with "tamtrg09" and "abc123"
       And I do transaction with type is "TRANSFER" and "Chuyển khoản trong HDBank"
-      And As KHCN, I transfer from "003704070000251 (TRUONG THANH TAM) - VND" to "002704070002050" account, "200000" amount and "AUTO DESCRIPTION" description with fee payer is "Bên chuyển"
-      Then I verify "Tài khoản thụ hưởng" "002704070002050" is displayed after doing transaction successfully
+      And As KHCN, I transfer from "003704070000251 (TRUONG THANH TAM) - VND" to "003704070003686" account, "200000" amount and "AUTO DESCRIPTION" description with fee payer is "Bên chuyển"
+      Then I verify "Tài khoản thụ hưởng" "003704070003686" is displayed after doing transaction successfully
       Then I verify "Số tiền ghi nợ" "200,000" is displayed after doing transaction successfully
       Then I verify "Số tiền ghi có" "200,000" is displayed after doing transaction successfully
-      Then I verify "Số tiền phí" "0" is displayed after doing transaction successfully
+      Then I verify "Số tiền phí" "VND 0" is displayed after doing transaction successfully
       Then I verify "Phí tính cho bên" "Bên chuyển" is displayed after doing transaction successfully
       And I input the code to complete the transaction
       Then I verify "" "Giao dịch thành công." is displayed after doing transaction successfully
@@ -143,7 +144,7 @@
       Then As KHCN, I search the limit with user "tamtrg09"
       And  As KHCN, I choose "003704070000251 (TRUONG THANH TAM) - VND" account, "tamtrg09" ID account and "SMS OTP" authenticate method
       And I get after transferring limit "Chuyển tiền trong khác chủ TK" with above user
-      Then I verify after transferring limit = before transferring limit - "200000"
+      Then I verify after transferring limit = before transferring limit - "0"
 
     @KHCN_internal_transfer-07
     Scenario: I verify the transaction is not approved when transferring with amount > limit amount per transaction

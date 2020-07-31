@@ -320,4 +320,5 @@ public class adminSteps extends TestBase {
         driver.findElement(By.name("BulkCMNDRequest/bulkCMND/bulkDetail/narative")).sendKeys(description);
         driver.findElement(By.xpath("//a[@class='btn btn-warning' and contains(text(),'Tiếp Tục')]")).click();
     }
+
 }
